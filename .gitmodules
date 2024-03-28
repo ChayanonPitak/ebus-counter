@@ -1,0 +1,9 @@
+[submodule "src/hardware"]
+	path = src/hardware
+	url = https://github.com/IkaWaAyuMu/261492-hw.git
+[submodule "src/web"]
+	path = src/web
+	url = https://github.com/DifficultIV/261492-Occupancy-monitoring.git
+[submodule "src/backend"]
+	path = src/backend
+	url = https://github.com/DifficultIV/261492-Backend.git
