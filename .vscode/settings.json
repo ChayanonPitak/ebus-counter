@@ -11,5 +11,6 @@
         "%DOC%"
       ]
     }
-  ]
+  ],
+  "latex-workshop.latex.recipe.default": "lastUsed"
 }
