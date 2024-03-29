@@ -8,11 +8,92 @@
 ในบทนี้จะกล่าวถึงหลักการ และการออกแบบระบบ
 
 \section{อุปกรณ์ตรวจวัดความหนาแน่น}
-ออกแบบอุปกรณ์วัดความหนาแน่น โดยหลัก ๆ จะประกอบด้วยไมโครคอนโทรลคอนโทรลเลอร์และเซนเซอร์วัดระยะทางแบบอินฟาเรด Sharp GP2Y0A02YK0F ซึ่งจะมีเซนเซอร์วัดระยะทางทั้งหมด 4 ตัว ติดอยู่ที่ประตูผู้โดยสารประตูละ 2 ตัว ประกอบด้วยเซนเซอร์ที่อยู่ใกล้ทางเดินภายในรถ (IN1 และ IN2) และ เซนเซอร์ที่อยู่ใกล้ประตูรถ (OUT1 และ OUT2) 
-% State machine ของวิธีการนับจากข้อมูลของเซนเซอร์ โดยแบ่งเซนเซอร์ที่อยู่ใกล้ทางเดินภายในรถเป็น IN และ เซนเซอร์ที่อยู่ใกล้ประตูรถเป็น OUT แยกกันนับในแต่ละประตู ซึ่งหากวัตถุอยู่ใกล้เซนเซอร์วัดระยะทาง น้อยกว่าหรือเท่ากับ ที่กำหนดไว้ผ่านตัวต้านทานแบบปรับค่าได้ (POT …) จะนับว่ามีวัตถุ (1) นอกจากนั้นจะนับว่าไม่มีวัตถุ (0) โดยจาก State Machine จะนับการ เข้า/ออกที่สถานะ IN/OUT ตามลำดับ
+\subsection{โครงสร้างของอุปกรณ์}
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=1\textwidth]{schematic-framed.png}
+  \end{center}
+  \caption{โครงสร้างวงจรของอุปกรณ์}
+  \label{fig:schematic-framed}
+\end{figure}
+
+อุปกรณ์จะประกอบไปด้วย
+\begin{itemize}
+  \item บอร์ดสำหรับพัฒนา LILYGO T-A7608 (สีเขียวดังภาพที่ \ref{fig:schematic-framed}) สำหรับประมวลผลข้อมูลที่ได้จากอุปกรณ์วัดต่างๆ และรับ-ส่งข้อมูลกับระบบเชื่อมต่อและแสดงผลข้อมูล
+  \item อุปกรณ์รับ-ส่งข้อมูล GNSS u-blox Neo-7M (สีส้มดังภาพที่ \ref{fig:schematic-framed}) สำหรับ รับ-ส่งค่าตำแหน่งของอุปกรณ์
+  \item อุปกรณ์วัดระยะห่างโดยใช้อินฟราเรด Sharp GP2Y0A02YK0F 4 ชิ้น โดยติดประคูละ 2 ชิ้น ใกล้กันในแนวระนาบ สำหรับวัดการ เข้า-ออก ของผู้โดยสาร
+\end{itemize}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{schematic-framed.png}
+  \end{center}
+  \caption[อุปกรณ์วัดต้นแบบ]{อุปกรณ์วัดต้นแบบ (บอร์ดพัฒนาและอุปกรณ์รับ-ส่งข้อมูล GNSS อยู่ที่กล่องกลาง ส่วนอุปกรณ์วัดระยะห่างโดยใช้อินฟราเรด อยู่ที่กล่องซ้ายและขวา)}
+  \label{fig:schematic-framed}
+\end{figure}
+
+\subsection{การทํางานของอุปกรณ์ตรวจวัด}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=1\textwidth]{state-machine.png}
+  \end{center}
+  \caption{State Machine ของอุปกรณ์วัด}
+  \label{fig:state-machine}
+\end{figure}
 
 
-\section{ระบบเชื่อมต่อและแสดงผลข้อมูล}
+\subsection{การทํางานของอุปกรณ์ตรวจวัด}
+
+อุปกรณ์จะวัดความหนาแน่นโดยดูจากการเข้า-ออกของผู้โดยที่ประตูผู้โดยสารที่ประตูผู้โดยสารดัง State Matchine ที่\ref{fig:state-machine} โดยหากมีวัตถุอยู่หน้าอุปกรณ์วัดระยะห่างน้อยกว่าที่กำหนด จะนับว่าอุปกรณ์วัดนั้นมีค่าเป็น 1 และเป็น 0 ในทางตรงกันข้าม สำหรับอุปกรณ์วัดการเข้าออกจะเป็น 2 ชุด แต่ละชุดจะมี INSIDE สำหรับอุปกรณ์ฝั่งใกล้ห้องผู้โดยสาร และ OUTSIDE สำหรับอุปกรณ์ฝั่งใกล้ประตู และจะส่งข้อมูลของแต่ละชุดไปยังอุปกรณ์พัฒนาเพื่อประมวลผลข้อมูล ที่มีสถานะดังนี้
+
+\begin{itemize}
+  \item IDLE : สถานะเริ่มต้น
+  \item SEMI\_OUT\_1: อุปกรณ์วัดระยะห่าง INSIDE ตรวจพบวัตถุก่อน
+  \item SEMI\_OUT\_2: อุปกรณ์วัดระยะห่าง INSIDE และ OUTSIDE ตรวจพบวัตถุกพร้อมกันหลัง SEMI\_OUT\_1
+  \item SEMI\_OUT\_3: อุปกรณ์วัดระยะห่าง OUTSIDE ตรวจพบวัตถุหลังอุปกรณ์วัดระยะห่าง INSIDE ไม่ตรวจพบวัตถุ
+  \item OUT: ผู้โดยสารออกจากรถโดยสาร (นับผู้โดยสารลดลง 1)
+  \item SEMI\_IN\_1: อุปกรณ์วัดระยะห่าง OUTSIDE ตรวจพบวัตถุก่อน
+  \item SEMI\_IN\_2: อุปกรณ์วัดระยะห่าง INSIDE และ OUTSIDE ตรวจพบวัตถุกพร้อมกันหลัง SEMI\_IN\_1
+  \item SEMI\_IN\_3: อุปกรณ์วัดระยะห่าง INSIDE ตรวจพบวัตถุหลังอุปกรณ์วัดระยะห่าง OUTSIDE ไม่ตรวจพบวัตถุ
+  \item IN: ผู้โดยสารเข้าสู่รถโดยสาร (นับผู้โดยสารเพิ่มขึ้น 1)
+  \item SPECIAL: อุปกรณ์วัดระยะห่าง INSIDE และ OUTSIDE ตรวจพบวัตถุกพร้อมกันหลัง IDLE
+\end{itemize}
+
+
+
+\subsection{การส่งข้อมูล}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=1\textwidth]{msg-transmit.png}
+  \end{center}
+  \caption{การส่งข้อมูล}
+  \label{fig:msg-transmit}
+\end{figure}
+
+อุปกรณ์จะรับข้อมูลพื้นที่สถานีจากระบบเชื่อมต่อและแสดงผลข้อมูล และส่งข้อมูลของตัวเองไปยังระบบเชื่อมต่อและแสดงผลข้อมูล (ลูกศรสีน้ำเงินดังภาพที่ \ref{ffig:msg-transmit}) โดยใช้ระบบ MQTT เมื่อรถโดยสารเข้าสู้สถานีและออกจากสถานี(กรอบสีแดงดังภาพที่ \ref{ffig:msg-transmit}) รวมไปถึงหากไม่เข้า - ออกสถานีเกิน 5 นาที ก็จะส่งข้อมูลเช่นกัน การตรวจวัดความหนาแน่นจะเกิดขึ้นเมื่อรถโดยสารอยู่ในเขตสถานีเท่านั้น
+
+\subsection{รูปแบบการส่งข้อมูล}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{data-schema.png}
+  \end{center}
+  \caption{รูปแบบการส่งข้อมูล}
+  \label{fig:data-schema}
+\end{figure}
+
+อุปกรณ์จะส่งข้อมูลภาพรวมของความหนาแน่นทุกครั้งที่เข้า/ออกสถานี ดังนี้
+\begin{itemize}
+  \item หมายเลขอุปกรณ์
+  \item เวลาที่เข้า/ออกสถานี
+  \item เวลาที่รีเซ็ตข้อมูล (โดยปกติจะเป็นเวลาเที่ยงคืน และ เวลาเปิดเครื่อง)
+  \item ตำแหน่งของอุปกรณ์
+  \item ข้อมูลความหนาแน่น (จำนวนคนเข้า/ออก จำนวนคนบนรถในปัจจุบัน)
+\end{itemize}
+
+\subsection{ระบบเชื่อมต่อและแสดงผลข้อมูล}
 
 \subsection{การเชื่อมต่อ (Back-end)}
 จะรับข้อมูลมาจากอุปกรณ์ IoT โดยใช้ระบบ MQTT และนำมาประมวลผลโดยใช้ Node.js และนำข้อมูลส่งไปที่การแสดงผลโดยใช้ API ของ Express เพื่อนำข้อมูลส่งขึ้นไปการแสดงผล และนำข้อมูลไปเก็บไว้ใน Database ของ Influxdb
@@ -24,94 +105,6 @@
     \begin{center}
       \includegraphics[width=0.75\textwidth]{exchange-data.png}
     \end{center}
-    \caption[Poem]{การแลกเปลี่ยนข้อมูล}
+    \caption{การแลกเปลี่ยนข้อมูล}
     \label{fig:exchangedata}
   \end{figure}
-% \makeatletter
-
-% % \renewcommand\section{\@startsection {section}{1}{\z@}%
-% %                                    {13.5ex \@plus -1ex \@minus -.2ex}%
-% %                                    {2.3ex \@plus.2ex}%
-% %                                    {\normalfont\large\bfseries}}
-
-% \makeatother
-% %\vspace{2ex}
-% % \titleformat{\section}{\normalfont\bfseries}{\thesection}{1em}{}
-% % \titlespacing*{\section}{0pt}{10ex}{0pt}
-
-% \section{Alice in Wonderland}
-
-% \begin{figure}
-% \begin{center}
-% \includegraphics{800px-Briny_Beach.jpg}
-% \end{center}
-% \caption[Poem]{The Walrus and the Carpenter}
-% \label{fig:walrus}
-% \end{figure}
-
-% \subsection{The Black Kitten}
-%   One thing was certain, that the WHITE kitten had had nothing to
-% do with it:---it was the black kitten's fault entirely~\cite{aiw}.  For the
-% white kitten had been having its face washed by the old cat for
-% the last quarter of an hour (and bearing it pretty well,
-% considering); so you see that it COULDN'T have had any hand in
-% the mischief.
-
-%   The way Dinah washed her children's faces was this:  first she
-% held the poor thing down by its ear with one paw, and then with
-% the other paw she rubbed its face all over, the wrong way,
-% beginning at the nose:  and just now, as I said, she was hard at
-% work on the white kitten, which was lying quite still and trying
-% to purr---no doubt feeling that it was all meant for its good.
-
-%   But the black kitten had been finished with earlier in the
-% afternoon, and so, while Alice was sitting curled up in a corner
-% of the great arm-chair, half talking to herself and half asleep,
-% the kitten had been having a grand game of romps with the ball of
-% worsted Alice had been trying to wind up, and had been rolling it
-% up and down till it had all come undone again; and there it was,
-% spread over the hearth-rug, all knots and tangles, with the
-% kitten running after its own tail in the middle.
-
-% \subsection{The Reproach}
-
-%   `Oh, you wicked little thing!' cried Alice, catching up the
-% kitten, and giving it a little kiss to make it understand that it
-% was in disgrace.  `Really, Dinah ought to have taught you better
-% manners!  You OUGHT, Dinah, you know you ought!' she added,
-% looking reproachfully at the old cat, and speaking in as cross a
-% voice as she could manage---and then she scrambled back into the
-% arm-chair, taking the kitten and the worsted with her, and began
-% winding up the ball again.  But she didn't get on very fast, as
-% she was talking all the time, sometimes to the kitten, and
-% sometimes to herself.  Kitty sat very demurely on her knee,
-% pretending to watch the progress of the winding, and now and then
-% putting out one paw and gently touching the ball, as if it would
-% be glad to help, if it might.
-
-%   `Do you know what to-morrow is, Kitty?' Alice began.  `You'd
-% have guessed if you'd been up in the window with me---only Dinah
-% was making you tidy, so you couldn't.  I was watching the boys
-% getting in stick for the bonfire---and it wants plenty of
-% sticks, Kitty!  Only it got so cold, and it snowed so, they had
-% to leave off.  Never mind, Kitty, we'll go and see the bonfire
-% to-morrow.'  Here Alice wound two or three turns of the worsted
-% round the kitten's neck, just to see how it would look:  this led
-% to a scramble, in which the ball rolled down upon the floor, and
-% yards and yards of it got unwound again.
-
-%   `Do you know, I was so angry, Kitty,' Alice went on as soon as
-% they were comfortably settled again, `when I saw all the mischief
-% you had been doing, I was very nearly opening the window, and
-% putting you out into the snow!  And you'd have deserved it, you
-% little mischievous darling!  What have you got to say for
-% yourself?  Now don't interrupt me!' she went on, holding up one
-% finger.  `I'm going to tell you all your faults.  Number one:
-% you squeaked twice while Dinah was washing your face this
-% morning.  Now you can't deny it, Kitty:  I heard you!  What that
-% you say?' (pretending that the kitten was speaking.)  `Her paw
-% went into your eye?  Well, that's YOUR fault, for keeping your
-% eyes open---if you'd shut them tight up, it wouldn't have
-% happened.  Now don't make any more excuses, but listen!  Number
-% two:  you pulled Snowdrop away by the tail just as I had put down
-% the saucer of milk before her!  What, you were thirsty, were you?
